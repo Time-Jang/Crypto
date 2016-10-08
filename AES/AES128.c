@@ -249,23 +249,40 @@ BYTE* shiftRows(BYTE *block, int mode){
  *  mode    MixColumns의 수행 모드
  */
 BYTE* mixColumns(BYTE *block, int mode){    
-
+	char *Cols[BLOCK_SIZE];
+	int i,j,k;
+	int temp = 0;
+	int size = KEY_SIZE/4;
     /* 필요하다 생각하면 추가 선언 */   
 
     switch(mode){
 
         case ENC:
-            /*********************************************** { 구현 6 시작 } ********************************************/
-			f
-
-
+            /*********************************************** { 구현 6 시작 } ******************************************** MCOL*/
+			for(i=0;i<size;i++)
+				for(j=0;j<size;j++) // 행 하나 계산
+				{
+					temp = 0;
+					for(k=0;k<size;k++) // 원소 하나 계산
+						temp = (temp + (MCOL[(size*i)+k]*block[(size*k)+k])%8)%8;
+					Cols[(size*i)+j] = temp;
+				}
+			
 
             /*********************************************** { 구현 6 종료 } ********************************************/            
             break;
 
         case DEC:
             /*********************************************** { 구현 7 시작 } ********************************************/
-			f
+			for(i=0;i<size;i++)
+				for(j=0;j<size;j++) // 행 하나 계산
+				{
+					temp = 0;
+					for(k=0;k<size;k++) // 원소 하나 계산
+						temp = (temp + (RMCOL[(size*i)+k]*block[(size*k)+k])%8)%8;
+					Cols[(size*i)+j] = temp;
+				}
+			
 
 
 
@@ -311,12 +328,26 @@ BYTE* addRoundKey(BYTE *block, BYTE *rKey){
  */
 BYTE* encrypt(BYTE *plain, BYTE *key){
     BYTE roundKey[ROUNDKEY_SIZE];
-
+	//expandKey(BYTE *key, BYTE *roundKey) , subBytes(BYTE *block, int mode) , shiftRows(BYTE *block, int mode) , mixColumns(BYTE *block, int mode)
+	// addRoundKey(BYTE *block, BYTE *rKey)
     /*********************************************** { 구현 9 시작 } ********************************************/
-
-
-
-
+	int i;
+	BYTE *cipher = (BYTE *)malloc(sizeof(BYTE)*BLOCK_SIZE);
+	expandKey(key, roundKey);
+	for(i=0;i<BLOCK_SIZE;i++)
+		cipher[i]=plain[i];
+	addRoundKey(cipher, roundKey);
+	for(i=0;i<9;i++)
+	{
+		subBytes(cipher, ENC);
+		shiftRows(cipher, ENC);
+		mixColumns(cipher, ENC);
+		addRoundKey(cipher, &roundKey[(i+1)*BLOCK_SIZE]);
+	}
+	subBytes(cipher, ENC);
+	shiftRows(cipher, ENC);
+	addRoundKey(cipher, &roundKey[ROUNDKEY_SIZE-BLOCK_SIZE]);
+	return cipher;
     /*********************************************** { 구현 9 종료 } ********************************************/
 }
 
@@ -332,10 +363,22 @@ BYTE* decrypt(BYTE *cipher, BYTE *key){
     BYTE roundKey[ROUNDKEY_SIZE];
     
     /*********************************************** { 구현 10 시작 } ********************************************/
-
-
-
-
+	int i;
+	BYTE *plain = (BYTE *)malloc(sizeof(BYTE)*BLOCK_SIZE);
+	expandKey(key, roundKey);
+	for(i=0;i<BLOCK_SIZE;i++)
+		plain[i]=cipher[i];
+	addRoundKey(plain, &roundKey[ROUNDKEY_SIZE-BLOCK_SIZE]);
+	for (i=0;i<9;i++) {
+		shiftRows(plain, DEC);
+		subBytes(plain, DEC);
+		addRoundKey(plain, &roundKey[ROUNDKEY_SIZE-BLOCK_SIZE*(i+2)]);
+		mixColumns(plain, DEC);
+	}
+	shiftRows(plain, DEC);
+	subBytes(plain, DEC);
+	addRoundKey(plain, &roundKey[0]);
+	return plain;
     /*********************************************** { 구현 10 종료 } ********************************************/
 }
 
@@ -361,7 +404,9 @@ void AES128(BYTE *plain, BYTE *cipher, BYTE *key, int mode){
         tmp = encrypt(plain, key);
 
         /*********************************************** { 구현 11 시작 } ********************************************/
-
+		int i;
+		for(i=0;i<16;i++)
+			cipher[i]=tmp[i];
 
 
         /*********************************************** { 구현 11 종료 } ********************************************/ 
@@ -370,7 +415,9 @@ void AES128(BYTE *plain, BYTE *cipher, BYTE *key, int mode){
         tmp = decrypt(cipher, key);
 
         /*********************************************** { 구현 12 시작 } ********************************************/
-
+		int i;
+		for(i=0;i<16;i++)
+			plain[i]=tmp[i];
 
 
         /*********************************************** { 구현 12 종료 } ********************************************/ 
