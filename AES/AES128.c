@@ -108,25 +108,25 @@ void expandKey(BYTE *key, BYTE *roundKey){   //                         검산
 	BYTE g[KEY_SIZE/4]; // 해당 라운드에서 사용되는 g
 	BYTE tempkey[BLOCK_SIZE]; //해당 라운드에서 사용되는 key
 	for(k=0;k<BLOCK_SIZE;k++) //첫 roundkey에 key 삽입
-		roundkey[k]=key[k];
-	for(i=0,i<(ROUNDKEY_SIZE/BLOCK_SIZE)-1,i++) //나머지 roundkey
+		roundKey[k]=key[k];
+	for(i=0;i < ((ROUNDKEY_SIZE/BLOCK_SIZE)-1);i++) //나머지 roundkey
 	{
 		for(k=0;k<BLOCK_SIZE;k++) 
-			tempkey[k]=roundkey[(BLOCK_SIZE)*i+k];
+			tempkey[k]=roundKey[(BLOCK_SIZE)*i+k];
 		// G 구하기 for문 하나로 줄여봄
 		for(j=0;j<KEY_SIZE/4;j++) ///Left Rotation Word ,g = [w3[1],w3[2],w3[3],w3[0]]
 		{
-			g[((KEY_SIZE/4)-1)-j] = tempkey[j*(KEY_SIZE/4)+((KEYSIZE/4)-1)];
+			g[((KEY_SIZE/4)-1)-j] = tempkey[j*(KEY_SIZE/4)+((KEY_SIZE/4)-1)];
 			g[j]=S_BOX[g[j]];
 			g[j]^=RCON[i];
 		}
 		//G 완성
-		for(j=0;<j<(KEY_SIZE/4);j++) //첫번째 word의 g연산 
+		for(j=0; j < (KEY_SIZE/4); j++) //첫번째 word의 g연산 
 			tempkey[j]^=g[j];
 		for(j=(KEY_SIZE/4);j<BLOCK_SIZE;j++)
 			tempkey[j]^=tempkey[j-(KEY_SIZE/4)];
 		for(j=0;j<BLOCK_SIZE;j++)
-			roundkey[BLOCK_SIZE*(i+1)+j]=tempkey[j];
+			roundKey[BLOCK_SIZE*(i+1)+j]=tempkey[j];
 	}
 
 
@@ -248,13 +248,58 @@ BYTE* shiftRows(BYTE *block, int mode){
  *  block   MixColumns을 수행할 16바이트 블록. 수행 결과는 해당 배열에 바로 반영
  *  mode    MixColumns의 수행 모드
  */
+BYTE* mixColumns(BYTE *block, int mode){ 
+	/*
 BYTE* mixColumns(BYTE *block, int mode){    
-	char *Cols[BLOCK_SIZE];
-	int i,j,k;
-	int temp = 0;
-	int size = KEY_SIZE/4;
-    /* 필요하다 생각하면 추가 선언 */   
+	int r, c, i;
+	BYTE sum = 0;
+	BYTE tmp[16];
+	BYTE swp;
 
+	memcpy(tmp, block, 16);
+	for (r = 0; r < 3; ++r) {
+		for (c = r + 1; c < 4; ++c) {
+			swp = tmp[4 * r + c];
+			tmp[4 * r + c] = tmp[4 * c + r];
+			tmp[4 * c + r] = swp;
+		}
+	}
+	switch(mode){
+		case ENC:
+			for (r = 0; r < 4; ++r) {
+				for (c = 0; c < 4; ++c) {
+					sum = mul[mCol[4 * r] - 1][tmp[c]];
+					for (i = 1; i < 4; ++i) {
+						sum ^= mul[mCol[4 * r + i] - 1][tmp[4 * i + c]];
+					}
+					*(block + 4 * c + r) = sum;
+				}
+			}
+			break;
+		case DEC:
+			for (r = 0; r < 4; ++r) {
+				for (c = 0; c < 4; ++c) {
+					sum = mul[rmCol[4 * r] - 1][tmp[c]];
+					for (i = 1; i < 4; ++i) {
+						sum ^= mul[rmCol[4 * r + i] - 1][tmp[4 * i + c]];
+					}
+					*(block + 4 * c + r) = sum;
+				}
+			}
+			break;
+		default:
+			fprintf(stderr, "Invalid mode!\n");
+			exit(1);
+	}
+	return block;
+}
+*/
+	int i,j,k;
+	int size = KEY_SIZE/4;
+	BYTE Cols[BLOCK_SIZE];
+	BYTE block_copy[16];
+	BYTE temp;
+    /* 필요하다 생각하면 추가 선언 */  
     switch(mode){
 
         case ENC:
