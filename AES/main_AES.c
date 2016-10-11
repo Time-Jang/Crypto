@@ -10,7 +10,9 @@
  *  ======================================================================== */
 
 #include <stdio.h>
-#include "XTS_AES.h"
+#include <string.h>
+#include <stdint.h>
+#include "AES128.h"
 
 typedef unsigned char BYTE;
 
@@ -41,15 +43,42 @@ uint8_t cipher[] = {
 };
 
 int main(){
-	BYTE tmp[64];
+	int i,j;
+	BYTE result[64];
+	BYTE tmpBlock[16];
 
 	// 암호화 테스트
-	XTS_AES128(plain, tmp, 64, key, ENC);
-	printf("XTS_AES Encryption: %s\n", 0 == strncmp((char*) cipher, (char*) tmp, 64) ? "SUCCESS!" : "FAILURE!");
+	for(i = 0; i < 64; i++)
+		result[i] = plain[i];
+
+	for(i = 0; i < 4; i++){
+		for(j = 0; j < 16; j++)
+			if(i == 0)
+				result[j] = iv[j] ^ result[j];
+			else
+				result[i * 16 + j] = result[(i - 1) * 16 + j] ^ plain[i * 16 + j];		
+
+		AES128(result + i * 16, tmpBlock, key, ENC);
+		for(j = 0; j < 16; j++)
+			result[i * 16] = tmpBlock[i];
+	}
+	printf("AES Encryption: %s\n", 0 == strncmp((char*) cipher, (char*) result, 64) ? "SUCCESS!" : "FAILURE!");
 
 	// 복호화 테스트
-	XTS_AES128(tmp, cipher, 64, key, DEC);
-	printf("XTS_AES Decryption: %s\n", 0 == strncmp((char*) tmp, (char*) plain, 64) ? "SUCCESS!" : "FAILURE!");
+	for(i = 0; i < 64; i++)
+		result[i] = cipher[i];
+	
+	for(i = 0; i < 4; i++){
+		AES128(tmpBlock, result+i*16, key, DEC);	
+		
+		for(j = 0; j < 16; j++)
+			if(i == 0)
+				result[j] = iv[j] ^ tmpBlock[j];
+			else
+				result[i * 16 + j] = cipher[(i - 1) * 16 + j] ^ tmpBlock[j];		
+	}
+
+	printf("AES Decryption: %s\n", 0 == strncmp((char*) result, (char*) plain, 64) ? "SUCCESS!" : "FAILURE!");
 
 	return 0;
 }

@@ -258,17 +258,21 @@ void expandKey(BYTE *key, BYTE *roundKey){   //                         검산
 		// G 구하기 for문 하나로 줄여봄
 		for(j = 0; j < (KEY_SIZE / 4); j++) //g에 word 3복사
 			g[j] = tempkey[(j * (KEY_SIZE/4)) + (KEY_SIZE/4) - 1];
+		
 		for(j = 0; j < (KEY_SIZE / 4); j++) //Left Rotation Word
 		{
 			temp = g[j];
 			g[j] = g[j + 1];
 			g[j + 1] = temp;
 		}
+		
 		for(j = 0; j < (KEY_SIZE / 4); j++) //SubWord
 			g[j] = S_BOX[g[j]];
+		
 		for(j = 0; j < (KEY_SIZE / 4); j++) //XOR with RCON
 			g[j] = g[j] ^ RCON[4 * i + j];
 		//G 완성
+		
 		for(j=0; j < (KEY_SIZE/4); j++) //첫번째 word와 g를 연산해서 roundKey에 삽입
 			roundKey[BLOCK_SIZE + (BLOCK_SIZE * i) + (j * (KEY_SIZE / 4))] = tempkey[j * 4] ^ g[j];
 		for(j = 1; j < (KEY_SIZE/4); j++) // 나머지 word 게산 후 넣기
@@ -487,8 +491,8 @@ BYTE* encrypt(BYTE *plain, BYTE *key){
 	//expandKey(BYTE *key, BYTE *roundKey) , subBytes(BYTE *block, int mode) , shiftRows(BYTE *block, int mode) , mixColumns(BYTE *block, int mode)
 	// addRoundKey(BYTE *block, BYTE *rKey)
     /*********************************************** { 구현 9 시작 } ********************************************/
-	int i;
-	BYTE *cipher = (BYTE *)malloc(sizeof(BYTE)*BLOCK_SIZE);
+	int i,j;
+	BYTE *cipher = (BYTE *)malloc(sizeof(BYTE)* BLOCK_SIZE);
 	expandKey(key, roundKey);
 	for(i=0;i<BLOCK_SIZE;i++)
 		cipher[i]=plain[i];
@@ -496,15 +500,31 @@ BYTE* encrypt(BYTE *plain, BYTE *key){
 	for(i=0;i<9;i++)
 	{
 		subBytes(cipher, ENC);
+		printf("Roiund %d (subBytes): ",(i+1));
+		for(j = 0; j < 16; j++)
+			printf("%x",cipher[j]);
+		printf("\n\n");
 		shiftRows(cipher, ENC);
+		printf("Roiund %d (shiftRows): ",(i+1));
+		for(j = 0; j < 16; j++)
+			printf("%x",cipher[j]);
+		printf("\n\n");
 		mixColumns(cipher, ENC);
+		printf("Roiund %d (mixColumns): ",(i+1));
+		for(j = 0; j < 16; j++)
+			printf("%x",cipher[j]);
+		printf("\n\n");
 		addRoundKey(cipher, &roundKey[(i+1)*BLOCK_SIZE]);
+		printf("Roiund %d (addRoundKey): ",(i+1));
+		for(j = 0; j < 16; j++)
+			printf("%x",cipher[j]);
+		printf("\n\n");
 	}
 	subBytes(cipher, ENC);
 	shiftRows(cipher, ENC);
 	addRoundKey(cipher, &roundKey[ROUNDKEY_SIZE-BLOCK_SIZE]);
-	for(i = 0; i < 64; i++)
-		printf("%d : %20x\n",cipher[i]);
+//	for(i=0;i<16;i++)
+//		printf("%d : %20x\n",(i+1),cipher[i]);
 	return cipher;
     /*********************************************** { 구현 9 종료 } ********************************************/
 }
