@@ -59,36 +59,28 @@ void expandKey(BYTE *key, BYTE *roundKey){   //                         검산
 		for(k = 0; k < BLOCK_SIZE; k++) //계산할 word들을 tempkey에 담기
 			tempkey[k]=roundKey[(BLOCK_SIZE) * i + k];
 		// G 구하기 for문 하나로 줄여봄
-		for(j = 0; j < (KEY_SIZE / 4); j++) //g에 word 3복사
-			g[j] = tempkey[(j * (KEY_SIZE/4)) + (KEY_SIZE/4) - 1];
-
-		for(j = 0; j < 4; j ++)
-			printf("%d . %20x\n",i,g[j]);
-		printf("\n");
+		for(j = BLOCK_SIZE - 4; j < BLOCK_SIZE; j++) //g에 word 3복사
+			g[j - (BLOCK_SIZE -4)] = tempkey[j];
+		
 		for(j = 0; j < (KEY_SIZE / 4); j++) //Left Rotation Word
 		{
 			temp = g[j];
 			g[j] = g[j + 1];
 			g[j + 1] = temp;
 		}
-		for(j = 0; j < 4; j ++)
-			printf("%d . %20x\n",i,g[j]);
-		printf("\n");
+		
 		for(j = 0; j < (KEY_SIZE / 4); j++) //SubWord
 			g[j] = S_BOX[g[j]];
-		for(j = 0; j < 4; j++)
-			printf("%d . %20x\n",i,g[j]);
-		printf("\n");
+		
 		for(j = 0; j < (KEY_SIZE / 4); j++) //XOR with RCON
 			g[j] = g[j] ^ RCON[4 * i + j];
 		//G 완성
-		for(j = 0; j < 4; j++)
-			printf("%d . %20x\n",i,g[j]);
+		
 		for(j=0; j < (KEY_SIZE/4); j++) //첫번째 word와 g를 연산해서 roundKey에 삽입
-			roundKey[BLOCK_SIZE + (BLOCK_SIZE * i) + (j * (KEY_SIZE / 4))] = tempkey[j * 4] ^ g[j];
+			roundKey[(BLOCK_SIZE * (i + 1)) + j] = tempkey[j] ^ g[j];
 		for(j = 1; j < (KEY_SIZE/4); j++) // 나머지 word 게산 후 넣기
 			for(k = 0; k < (KEY_SIZE/4); k++)
-				roundKey[BLOCK_SIZE + (BLOCK_SIZE * i) + j + (k * 4)] = tempkey[(k * 4) + j] ^ roundKey[BLOCK_SIZE + (BLOCK_SIZE * i) + j + (k * 4) - 1];
+				roundKey[(BLOCK_SIZE * (i+1)) + ((KEY_SIZE/4) * j) + k ] = tempkey[(j * 4) + k] ^ roundKey[BLOCK_SIZE + (BLOCK_SIZE * i) + ((KEY_SIZE/4) * (j - 1)) + k];
 	}
 
 
@@ -97,14 +89,15 @@ void expandKey(BYTE *key, BYTE *roundKey){   //                         검산
 
 }
 
+
 int main()
 {
 	BYTE key[] = 
 	{ 
-		0x2b, 0x28, 0xab, 0x09,
-		0x7e, 0xae, 0xf7, 0xcf, 
-		0x15, 0x2a, 0x15, 0x4f,
-		0x16, 0xa6, 0x88, 0x3c
+		0x2b, 0x7e, 0x15, 0x16,
+		0x28, 0xae, 0xd2, 0xa6, 
+		0xab, 0xf7, 0x15, 0x88,
+		0x09, 0xcf, 0x4f, 0x3c
 	};
 	BYTE roundKey[ROUNDKEY_SIZE];
 	expandKey(key,roundKey);

@@ -10,8 +10,8 @@
  *  ======================================================================== */
 
 #include <stdio.h>
-#include "/Users/jang-won-u/Desktop/cryptology/AES/AES128/AES128.c"
-#include "/Users/jang-won-u/Desktop/cryptology/AES/AES128/AES128.h"
+#include "/Users/jang-won-u/Desktop/cryptology/AES/test_AES/AES128/AES128.c"
+#include "/Users/jang-won-u/Desktop/cryptology/AES/test_AES/AES128/AES128.h"
 
 typedef unsigned char BYTE;
 
@@ -42,8 +42,8 @@ int main()
 	*/
 	BYTE plain[] =
 	{
-		0x00, 0x11, 0x22, 0x33, 
-		0x44, 0x55, 0x66, 0x77, 
+		0x00, 0x11, 0x22, 0x33,
+		0x44, 0x55, 0x66, 0x77,
 		0x88, 0x99, 0xaa, 0xbb,
 		0xcc, 0xdd, 0xee, 0xff
 	};
@@ -54,11 +54,24 @@ int main()
 		0x08, 0x09, 0x0a, 0x0b,
 		0x0c, 0x0d, 0x0e, 0x0f
 	};
-	int i;
+	int i,j;
 	BYTE *my_cipher = (BYTE *)malloc(sizeof(BYTE)*16);
 	my_cipher = encrypt(plain,Key);
 	printf("\n\n%20x\n\n",my_cipher[0]);
-	for(i = 0; i < 16; i++)
-		printf("%d . %20x\n",(i+1),my_cipher[i]);
+	for(j = 0; j < 4; j++)
+	{
+		for(i = 0; i < 4; i++)
+			printf("%x ",my_cipher[i*4 + j]);
+		printf("\n");
+	}
+	BYTE *my_plain = (BYTE *)malloc(sizeof(BYTE)*16);
+	my_plain = decrypt(my_cipher,Key);
+	printf("\n\n%20x\n\n",my_plain[0]);
+	for(j = 0; j < 4; j++)
+	{
+		for(i = 0; i < 4; i++)
+			printf("%x ",my_plain[i*4 + j]);
+		printf("\n");
+	}	
 	return 0;
 }

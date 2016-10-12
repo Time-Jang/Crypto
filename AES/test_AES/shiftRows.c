@@ -54,22 +54,24 @@ BYTE* shiftRows(BYTE *block, int mode){
 
         case ENC:
             /*********************************************** { 구현 4 시작 } ********************************************/
-			temp = block[KEY_SIZE/4];       // row 2
-			for(i=1;i<(KEY_SIZE/4);i++)
-				block[3+i]=block[4+i];
-			block[3+i] = temp;
-			
-			for(i=0;i<KEY_SIZE/8;i++) // row 3
+			for(i = 0; i < (KEY_SIZE/4) - 1; i++)// row 2
 			{
-				temp = block[8+i];
-				block[8+i] = block[10+i];
-				block[10+i] = temp;
+				temp = block[1 + ((KEY_SIZE/4) * i)];
+				block[1 + ((KEY_SIZE/4) * i)] = block[1 + ((KEY_SIZE/4) * (i + 1))];
+				block[1 + ((KEY_SIZE/4) * (i+1))] = temp;
 			}
-			
-			temp = block[11+(KEY_SIZE/4)];          // row4
-			for(i=(KEY_SIZE/4);i>1;i--) 
-				block[11+i]=block[10+i];
-			block[11+i] = temp;
+			for(i = 0; i < ((KEY_SIZE/4)/2); i++) // row 3
+			{
+				temp = block[2 + (i * (KEY_SIZE/4))];
+				block[2 + (i * (KEY_SIZE/4))] = block[2 + ((KEY_SIZE/4) * (i + 2))];
+				block[2 + ((KEY_SIZE/4) * (i + 2))] = temp;
+			}
+			for(i = (KEY_SIZE/4) - 1; i > 0; i--) //row4
+			{
+				temp = block[3 + ((KEY_SIZE/4) * i)];
+				block[3 + ((KEY_SIZE/4) * i)] = block[3 + ((KEY_SIZE/4) * (i - 1))];
+				block[3 + ((KEY_SIZE/4) * (i - 1))] = temp;
+			}
 
 
 
@@ -78,22 +80,25 @@ BYTE* shiftRows(BYTE *block, int mode){
 
         case DEC:
             /*********************************************** { 구현 5 시작 } ********************************************/
-			temp = block[3+KEY_SIZE/4];          // row2
-			for(i=(KEY_SIZE/4);i>1;i--) 
-				block[3+i]=block[2+i];
-			block[3+i] = temp;
-			
-			for(i=0;i<KEY_SIZE/8;i++) // row 3
+			for(i = (KEY_SIZE/4) - 1; i > 0; i--) //row4
 			{
-				temp = block[8+i];
-				block[8+i] = block[10+i];
-				block[10+i] = temp;
+				temp = block[1 + ((KEY_SIZE/4) * i)];
+				block[1 + ((KEY_SIZE/4) * i)] = block[1 + ((KEY_SIZE/4) * (i - 1))];
+				block[1 + ((KEY_SIZE/4) * (i - 1))] = temp;
 			}
-			
-			temp = block[12];       // row 4
-			for(i=1;i<(KEY_SIZE/4);i++)
-				block[11+i]=block[12+i];
-			block[11+i] = temp;
+
+			for(i = 0; i < ((KEY_SIZE/4)/2); i++) // row 3
+			{
+				temp = block[2 + (i * (KEY_SIZE/4))];
+				block[2 + (i * (KEY_SIZE/4))] = block[2 + ((KEY_SIZE/4) * (i + 2))];
+				block[2 + ((KEY_SIZE/4) * (i + 2))] = temp;
+			}
+			for(i = 0; i < (KEY_SIZE/4) - 1; i++)// row 2
+			{
+				temp = block[3 + ((KEY_SIZE/4) * i)]; 
+				block[3 + ((KEY_SIZE/4) * i)] = block[3 + ((KEY_SIZE/4) * (i + 1))];
+				block[3 + ((KEY_SIZE/4) * (i+1))] = temp;
+			}
 
 
 
@@ -113,13 +118,18 @@ int main()
 	int i;
 	BYTE block[] = 
 	{ 
-		0x2b, 0x28, 0xab, 0x09,
-		0x7e, 0xae, 0xf7, 0xcf, 
-		0x15, 0x2a, 0x15, 0x4f,
-		0x16, 0xa6, 0x88, 0x3c
+		0xd4, 0x27, 0x11, 0xae,
+		0xe0, 0xbf, 0x98, 0xf1,
+		0xb8, 0xb4, 0x5d, 0xe5,
+		0x1e, 0x41, 0x52, 0x30
 	};
 	shiftRows(block,ENC);
 	for(i = 0; i < 16; i++)
-		printf("%20x\n",block[i]);
+		printf("%x",block[i]);
+	printf("\n");
+	shiftRows(block,DEC);
+	for(i = 0; i < 16; i++)
+		printf("%x",block[i]);
+	printf("\n");
 	return 0;
 }

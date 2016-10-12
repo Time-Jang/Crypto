@@ -256,8 +256,8 @@ void expandKey(BYTE *key, BYTE *roundKey){   //                         검산
 		for(k = 0; k < BLOCK_SIZE; k++) //계산할 word들을 tempkey에 담기
 			tempkey[k]=roundKey[(BLOCK_SIZE) * i + k];
 		// G 구하기 for문 하나로 줄여봄
-		for(j = 0; j < (KEY_SIZE / 4); j++) //g에 word 3복사
-			g[j] = tempkey[(j * (KEY_SIZE/4)) + (KEY_SIZE/4) - 1];
+		for(j = BLOCK_SIZE - 4; j < BLOCK_SIZE; j++) //g에 word 3복사
+			g[j - (BLOCK_SIZE -4)] = tempkey[j];
 		
 		for(j = 0; j < (KEY_SIZE / 4); j++) //Left Rotation Word
 		{
@@ -274,10 +274,10 @@ void expandKey(BYTE *key, BYTE *roundKey){   //                         검산
 		//G 완성
 		
 		for(j=0; j < (KEY_SIZE/4); j++) //첫번째 word와 g를 연산해서 roundKey에 삽입
-			roundKey[BLOCK_SIZE + (BLOCK_SIZE * i) + (j * (KEY_SIZE / 4))] = tempkey[j * 4] ^ g[j];
+			roundKey[(BLOCK_SIZE * (i + 1)) + j] = tempkey[j] ^ g[j];
 		for(j = 1; j < (KEY_SIZE/4); j++) // 나머지 word 게산 후 넣기
 			for(k = 0; k < (KEY_SIZE/4); k++)
-				roundKey[BLOCK_SIZE + (BLOCK_SIZE * i) + j + (k * 4)] = tempkey[(k * 4) + j] ^ roundKey[BLOCK_SIZE + (BLOCK_SIZE * i) + j + (k * 4) - 1];
+				roundKey[(BLOCK_SIZE * (i+1)) + ((KEY_SIZE/4) * j) + k ] = tempkey[(j * 4) + k] ^ roundKey[BLOCK_SIZE + (BLOCK_SIZE * i) + ((KEY_SIZE/4) * (j - 1)) + k];
 	}
 
 
@@ -285,6 +285,8 @@ void expandKey(BYTE *key, BYTE *roundKey){   //                         검산
     /*********************************************** { 구현 1 종료 } ********************************************/
 
 }
+
+
 
 
 /*  <SubBytes 함수>
@@ -338,22 +340,24 @@ BYTE* shiftRows(BYTE *block, int mode){
 
         case ENC:
             /*********************************************** { 구현 4 시작 } ********************************************/
-			temp = block[KEY_SIZE/4];       // row 2
-			for(i=1;i<(KEY_SIZE/4);i++)
-				block[3+i]=block[4+i];
-			block[3+i] = temp;
-			
-			for(i=0;i<KEY_SIZE/8;i++) // row 3
+			for(i = 0; i < (KEY_SIZE/4) - 1; i++)// row 2
 			{
-				temp = block[8+i];
-				block[8+i] = block[10+i];
-				block[10+i] = temp;
+				temp = block[1 + ((KEY_SIZE/4) * i)];
+				block[1 + ((KEY_SIZE/4) * i)] = block[1 + ((KEY_SIZE/4) * (i + 1))];
+				block[1 + ((KEY_SIZE/4) * (i+1))] = temp;
 			}
-			
-			temp = block[11+(KEY_SIZE/4)];          // row4
-			for(i=(KEY_SIZE/4);i>1;i--) 
-				block[11+i]=block[10+i];
-			block[11+i] = temp;
+			for(i = 0; i < ((KEY_SIZE/4)/2); i++) // row 3
+			{
+				temp = block[2 + (i * (KEY_SIZE/4))];
+				block[2 + (i * (KEY_SIZE/4))] = block[2 + ((KEY_SIZE/4) * (i + 2))];
+				block[2 + ((KEY_SIZE/4) * (i + 2))] = temp;
+			}
+			for(i = (KEY_SIZE/4) - 1; i > 0; i--) //row4
+			{
+				temp = block[3 + ((KEY_SIZE/4) * i)];
+				block[3 + ((KEY_SIZE/4) * i)] = block[3 + ((KEY_SIZE/4) * (i - 1))];
+				block[3 + ((KEY_SIZE/4) * (i - 1))] = temp;
+			}
 
 
 
@@ -362,22 +366,25 @@ BYTE* shiftRows(BYTE *block, int mode){
 
         case DEC:
             /*********************************************** { 구현 5 시작 } ********************************************/
-			temp = block[3+KEY_SIZE/4];          // row2
-			for(i=(KEY_SIZE/4);i>1;i--) 
-				block[3+i]=block[2+i];
-			block[3+i] = temp;
-			
-			for(i=0;i<KEY_SIZE/8;i++) // row 3
+			for(i = (KEY_SIZE/4) - 1; i > 0; i--) //row4
 			{
-				temp = block[8+i];
-				block[8+i] = block[10+i];
-				block[10+i] = temp;
+				temp = block[1 + ((KEY_SIZE/4) * i)];
+				block[1 + ((KEY_SIZE/4) * i)] = block[1 + ((KEY_SIZE/4) * (i - 1))];
+				block[1 + ((KEY_SIZE/4) * (i - 1))] = temp;
 			}
-			
-			temp = block[12];       // row 4
-			for(i=1;i<(KEY_SIZE/4);i++)
-				block[11+i]=block[12+i];
-			block[11+i] = temp;
+
+			for(i = 0; i < ((KEY_SIZE/4)/2); i++) // row 3
+			{
+				temp = block[2 + (i * (KEY_SIZE/4))];
+				block[2 + (i * (KEY_SIZE/4))] = block[2 + ((KEY_SIZE/4) * (i + 2))];
+				block[2 + ((KEY_SIZE/4) * (i + 2))] = temp;
+			}
+			for(i = 0; i < (KEY_SIZE/4) - 1; i++)// row 2
+			{
+				temp = block[3 + ((KEY_SIZE/4) * i)]; 
+				block[3 + ((KEY_SIZE/4) * i)] = block[3 + ((KEY_SIZE/4) * (i + 1))];
+				block[3 + ((KEY_SIZE/4) * (i+1))] = temp;
+			}
 
 
 
@@ -392,7 +399,6 @@ BYTE* shiftRows(BYTE *block, int mode){
     
     return block;
 }
-
 
 /*  <MixColumns 함수>
  *   
@@ -469,7 +475,7 @@ BYTE* addRoundKey(BYTE *block, BYTE *rKey){
 	int i;
 	
 	for(i=0;i<BLOCK_SIZE;i++)
-		block[i]^= rKey[i];
+		block[i] = block[i] ^ rKey[i];
 
 
 
@@ -496,26 +502,34 @@ BYTE* encrypt(BYTE *plain, BYTE *key){
 	expandKey(key, roundKey);
 	for(i=0;i<BLOCK_SIZE;i++)
 		cipher[i]=plain[i];
+	printf("Round %d (input): ",0);
+	for(j = 0; j < 16; j++)
+		printf("%x",cipher[j]);
+	printf("\n\n");
 	addRoundKey(cipher, roundKey);
 	for(i=0;i<9;i++)
 	{
+		printf("Round %d (start): ",(i+1));
+		for(j = 0; j < 16; j++)
+			printf("%x",cipher[j]);
+		printf("\n\n");
 		subBytes(cipher, ENC);
-		printf("Roiund %d (subBytes): ",(i+1));
+		printf("Round %d (subBytes): ",(i+1));
 		for(j = 0; j < 16; j++)
 			printf("%x",cipher[j]);
 		printf("\n\n");
 		shiftRows(cipher, ENC);
-		printf("Roiund %d (shiftRows): ",(i+1));
+		printf("Round %d (shiftRows): ",(i+1));
 		for(j = 0; j < 16; j++)
 			printf("%x",cipher[j]);
 		printf("\n\n");
 		mixColumns(cipher, ENC);
-		printf("Roiund %d (mixColumns): ",(i+1));
+		printf("Round %d (mixColumns): ",(i+1));
 		for(j = 0; j < 16; j++)
 			printf("%x",cipher[j]);
 		printf("\n\n");
 		addRoundKey(cipher, &roundKey[(i+1)*BLOCK_SIZE]);
-		printf("Roiund %d (addRoundKey): ",(i+1));
+		printf("Round %d (addRoundKey): ",(i+1));
 		for(j = 0; j < 16; j++)
 			printf("%x",cipher[j]);
 		printf("\n\n");
