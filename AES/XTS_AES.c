@@ -19,10 +19,101 @@
 
 
 /*********************************************** { 구현 13 시작 } ********************************************/
+typedef unsigned int WORD;
+#define BLOCK_SIZE 16
 
-
-
-
+void encrypt_XTS(BYTE *key1, BYTE *key2, int N,const BYTE *plain, BYTE *cipher)
+{
+	int i,j,k;
+	int S = 0;
+	BYTE T[BLOCK_SIZE];
+	BYTE x[BLOCK_SIZE];
+	int Cin,Count;
+	BYTE T_C[BLOCK_SIZE];
+	BYTE x_C[BLOCK_SIZE];
+	for( j = 0; j < BLOCK_SIZE; j++)
+	{
+		T[j] = S & 0XFF;
+		S = S >> 8;
+	}
+	AES128(T,T_C,key2,ENC);
+	for(i = 0; i < N; i += BLOCK_SIZE)
+	{
+		for(j = 0; j < BLOCK_SIZE; j++)
+			x[j] = plain[i+j] ^ T_C[j];
+		AES128(x,x_C,key1,ENC);
+		for(j = 0; j < BLOCK_SIZE; j++)
+			cipher[i + j] = x_C[j] ^ T_C[j];
+		Cin = 0;
+		for(j = 0; j < BLOCK_SIZE; j++)
+		{
+			Count = (T_C[j] >> 7) & 1;
+			T_C[j] = ((T_C[j] << 1) + Cin) & 0xFF;
+			Cin = Count;
+		}
+		if(Count)
+			T_C[0] = T_C[0] ^ 0x87;
+	}	
+	if(i < N)
+	{
+		for(j = 0; i+j < N; j++)
+		{
+			x[j] = plain[i + j] ^ T[j];
+			cipher[i + j] = cipher[i + j - BLOCK_SIZE];
+		}
+		for(j = 0; j <BLOCK_SIZE; j++)
+			x[j] = cipher[i + j - BLOCK_SIZE] ^ T[j];
+		AES128(x,x_C,key1,ENC);
+		for(j = 0; j < BLOCK_SIZE; j++)
+			cipher[i + j - BLOCK_SIZE] = x_C[j] ^ T[j];
+	}
+}
+void decrypt_XTS(BYTE *key1, BYTE *key2, int N, BYTE *plain,const BYTE *cipher)
+{
+	int i,j,k;
+	int S = 0;
+	BYTE T[BLOCK_SIZE];
+	BYTE x[BLOCK_SIZE];
+	int Cin,Count;
+	BYTE T_C[BLOCK_SIZE]; //pp
+	BYTE x_C[BLOCK_SIZE]; //CC
+	for( j = 0; j < BLOCK_SIZE; j++)
+	{
+		T[j] = S & 0XFF;
+		S = S >> 8;
+	}
+	AES128(T,T_C,key2,ENC);  //T
+	for(i = 0; i < N; i += BLOCK_SIZE)
+	{
+		for(j = 0; j < BLOCK_SIZE; j++)
+			x[j] = cipher[i+j] ^ T_C[j]; //CC
+		AES128(x_C,x,key1,DEC);  //PP
+		for(j = 0; j < BLOCK_SIZE; j++)
+			plain[i + j] = x_C[j] ^ T_C[j]; //plain
+		Cin = 0;
+		for(j = 0; j < BLOCK_SIZE; j++)
+		{
+			Count = (T_C[j] >> 7) & 1;
+			T_C[j] = ((T_C[j] << 1) + Cin) & 0xFF;
+			Cin = Count;
+		}
+		if(Count)
+			T_C[0] = T_C[0] ^ 0x87;
+	}	
+	if(i < N)
+	{
+		for(j = 0; i+j < N; j++)
+		{
+			x[j] = cipher[i + j] ^ T[j];
+			plain[i + j] = plain[i + j - BLOCK_SIZE];
+		}
+		for(j = 0; j <BLOCK_SIZE; j++)
+			x[j] = plain[i + j - BLOCK_SIZE] ^ T[j];
+		AES128(x_C,x,key1,DEC);
+		for(j = 0; j < BLOCK_SIZE; j++)
+			plain[i + j - BLOCK_SIZE] = x_C[j] ^ T[j];
+	}	
+}
 /*********************************************** { 구현 13 종료 } ********************************************/
 
 
@@ -45,9 +136,18 @@
 void XTS_AES128(BYTE *plain, BYTE *cipher, unsigned int size, BYTE* key, int mode){
 
 	/*********************************************** { 구현 14 시작 } ********************************************/
-
-
-
-
+	if(mode == ENC)
+	{
+		encrypt_XTS(key, key+16, size, plain, cipher);
+	}
+	else if(mode == DEC)
+	{
+		decrypt_XTS(key, key+16, size, plain, cipher);
+	}
+	else
+	{
+		fprintf(stderr, "Invalid mode!\n");
+		exit(1);
+	}
 	/*********************************************** { 구현 14 종료 } ********************************************/
 }

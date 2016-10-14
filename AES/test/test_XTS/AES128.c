@@ -502,13 +502,37 @@ BYTE* encrypt(BYTE *plain, BYTE *key){
 	expandKey(key, roundKey);
 	for(i=0;i<BLOCK_SIZE;i++)
 		cipher[i]=plain[i];
+//	printf("Round %d (input): ",0);
+//	for(j = 0; j < 16; j++)
+//		printf("%x",cipher[j]);
+//	printf("\n\n");
 	addRoundKey(cipher, roundKey);
 	for(i=0;i<9;i++)
 	{
+//		printf("Round %d (start): ",(i+1));
+//		for(j = 0; j < 16; j++)
+//			printf("%x",cipher[j]);
+//		printf("\n\n");
 		subBytes(cipher, ENC);
+//		printf("Round %d (subBytes): ",(i+1));
+//		for(j = 0; j < 16; j++)
+//			printf("%x",cipher[j]);
+//		printf("\n\n");
 		shiftRows(cipher, ENC);
+//		printf("Round %d (shiftRows): ",(i+1));
+//		for(j = 0; j < 16; j++)
+//			printf("%x",cipher[j]);
+//		printf("\n\n");
 		mixColumns(cipher, ENC);
+//		printf("Round %d (mixColumns): ",(i+1));
+//		for(j = 0; j < 16; j++)
+//			printf("%x",cipher[j]);
+//		printf("\n\n");
 		addRoundKey(cipher, &roundKey[(i+1)*BLOCK_SIZE]);
+//		printf("Round %d (addRoundKey): ",(i+1));
+//		for(j = 0; j < 16; j++)
+//			printf("%x",cipher[j]);
+//		printf("\n\n");
 	}
 	subBytes(cipher, ENC);
 	shiftRows(cipher, ENC);

@@ -7,4 +7,4 @@
 typedef unsigned char BYTE;
 
 // 128비트 XTS_AES 암복호화 인터페이스
-void XTS_AES128(BYTE *plain, BYTE *cipher, unsigned int size, BYTE *key, int mode);
+void XTS_AES128(BYTE *plain, BYTE *cipher, unsigned int size, int mode);

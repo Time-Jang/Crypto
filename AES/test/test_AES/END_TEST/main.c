@@ -10,8 +10,8 @@
  *  ======================================================================== */
 
 #include <stdio.h>
-#include "/Users/jang-won-u/Desktop/cryptology/AES/test_AES/AES128/AES128.c"
-#include "/Users/jang-won-u/Desktop/cryptology/AES/test_AES/AES128/AES128.h"
+#include "/Users/jang-won-u/Desktop/cryptology/AES/test_AES/END_TEST/AES128.c"
+#include "/Users/jang-won-u/Desktop/cryptology/AES/test_AES/END_TEST/AES128.h"
 
 typedef unsigned char BYTE;
 
